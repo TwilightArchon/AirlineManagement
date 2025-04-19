@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 
@@ -10,7 +11,7 @@ export default function ThreeSlotHeader() {
         <div className="flex-1">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline">Menu 1</Button>
+              <Button variant="outline">Procedures</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem>Home</DropdownMenuItem>
@@ -20,30 +21,31 @@ export default function ThreeSlotHeader() {
           </DropdownMenu>
         </div>
 
-        {/* Slot 2 */}
-        <div className="flex-1 text-center">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="outline">Menu 2</Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent>
-              <DropdownMenuItem>Projects</DropdownMenuItem>
-              <DropdownMenuItem>Team</DropdownMenuItem>
-              <DropdownMenuItem>Careers</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-
         {/* Slot 3 */}
         <div className="flex-1 text-right">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline">Menu 3</Button>
+              <Button variant="outline">Views</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem>Login</DropdownMenuItem>
-              <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuItem>Support</DropdownMenuItem>
+            <DropdownMenuItem asChild>
+          <Link href="/views/alternateAirport">Alternate Airport</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/views/flightsInTheAir">Flights In The Air</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/views/flightsInTheGround">Flights In The Ground</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/views/pepoleInTheAir">People In The Air</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/views/pepoleInTheGround">People In The Ground</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link href="/views/routeSummary">Route Summary</Link>
+        </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
