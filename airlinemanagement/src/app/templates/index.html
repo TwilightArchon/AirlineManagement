@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flight Tracking System</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+    }
+    section {
+      margin-bottom: 30px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+    h2 {
+      margin-top: 0;
+    }
+    input[type="text"], input[type="number"], input[type="time"] {
+      width: 100%;
+      padding: 6px;
+      box-sizing: border-box;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    button {
+      padding: 8px 16px;
+      margin-top: 10px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 10px;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 6px;
+      text-align: left;
+    }
+    th {
+      background-color: #f0f0f0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Flight Tracking Admin Console</h1>
+
+  <section>
+    <h2>Run Stored Procedure</h2>
+    <label for="proc-select">Select Procedure:</label>
+    <select id="proc-select" onchange="renderProcedureForm()">
+      <option value="offer_flight">offer_flight</option>
+      <option value="add_airplane">add_airplane</option>
+      <option value="flight_takeoff">flight_takeoff</option>
+      <option value="flight_landing">flight_landing</option>
+      <option value="assign_pilot">assign_pilot</option>
+      <option value="simulation_cycle">simulation_cycle</option>
+    </select>
+    <form id="procedure-form"></form>
+    <pre id="proc-result"></pre>
+  </section>
+
+  <section>
+    <h2>Query View</h2>
+    <label for="view-select">Select View:</label>
+    <select id="view-select">
+      <option value="flights_in_the_air">flights_in_the_air</option>
+      <option value="flights_on_the_ground">flights_on_the_ground</option>
+      <option value="people_in_the_air">people_in_the_air</option>
+      <option value="people_on_the_ground">people_on_the_ground</option>
+      <option value="route_summary">route_summary</option>
+      <option value="alternative_airports">alternative_airports</option>
+    </select>
+    <button onclick="queryView()">Query</button>
+    <div id="view-result"></div>
+  </section>
+
+  <script>
+    const backend = '';
+
+    const procedureFields = {
+      offer_flight: ["ip_flightID", "ip_routeID", "ip_support_airline", "ip_support_tail", "ip_progress", "ip_next_time", "ip_cost"],
+      add_airplane: ["ip_airlineID", "ip_tail_num", "ip_seat_capacity", "ip_speed", "ip_locationID", "ip_plane_type", "ip_maintenanced", "ip_model", "ip_neo"],
+      flight_takeoff: ["ip_flightID"],
+      flight_landing: ["ip_flightID"],
+      assign_pilot: ["ip_flightID", "ip_personID"],
+      simulation_cycle: []
+    };
+
+    function renderProcedureForm() {
+      const form = document.getElementById('procedure-form');
+      const selected = document.getElementById('proc-select').value;
+      const fields = procedureFields[selected];
+      form.innerHTML = '';
+
+      if (fields.length === 0) {
+        form.innerHTML = '<button type="button" onclick="callProcedure()">Run</button>';
+        return;
+      }
+
+      fields.forEach(key => {
+        const label = document.createElement('label');
+        label.textContent = key;
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.name = key;
+        input.id = key;
+        form.appendChild(label);
+        form.appendChild(input);
+      });
+
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.textContent = 'Run';
+      button.onclick = callProcedure;
+      form.appendChild(button);
+    }
+
+    async function callProcedure() {
+      const proc = document.getElementById('proc-select').value;
+      const result = document.getElementById('proc-result');
+      const fields = procedureFields[proc];
+
+      const payload = {};
+      fields.forEach(field => {
+        const val = document.getElementById(field).value.trim();
+        if (val.toLowerCase() === 'null') {
+          payload[field] = null;
+        } else if (val.toLowerCase() === 'true') {
+          payload[field] = true;
+        } else if (val.toLowerCase() === 'false') {
+          payload[field] = false;
+        } else if (!isNaN(val) && val !== '') {
+          payload[field] = Number(val);
+        } else {
+          payload[field] = val;
+        }
+      });
+
+      try {
+        const res = await fetch(`${backend}/api/${proc}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        result.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        result.textContent = `Error: ${err}`;
+      }
+    }
+
+    async function queryView() {
+      const view = document.getElementById('view-select').value;
+      const output = document.getElementById('view-result');
+      output.innerHTML = 'Loading...';
+
+      try {
+        const response = await fetch(`${backend}/api/view/${view}`);
+        const data = await response.json();
+        console.log('Fetched view data:', data);
+
+        if (Array.isArray(data) && data.length > 0) {
+          const table = document.createElement('table');
+          const thead = document.createElement('thead');
+          const tbody = document.createElement('tbody');
+
+          const headers = Object.keys(data[0]);
+          const headRow = document.createElement('tr');
+          headers.forEach(header => {
+            const th = document.createElement('th');
+            th.textContent = header;
+            headRow.appendChild(th);
+          });
+          thead.appendChild(headRow);
+
+          data.forEach(row => {
+            const tr = document.createElement('tr');
+            headers.forEach(header => {
+              const td = document.createElement('td');
+              td.textContent = row[header];
+              tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+          });
+
+          table.appendChild(thead);
+          table.appendChild(tbody);
+          output.innerHTML = '';
+          output.appendChild(table);
+        } else {
+          output.innerHTML = '<p>No data found.</p>';
+        }
+      } catch (err) {
+        output.innerHTML = `<p style="color:red">Error: ${err.message}</p>`;
+      }
+    }
+
+    // Initialize default form
+    renderProcedureForm();
+  </script>
+</body>
+</html>
