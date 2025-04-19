@@ -1,4 +1,8 @@
 import Image from "next/image";
+import DatabaseTestButton from "./components/DatabaseTestButton";
+import AddAirplaneForm from "./components/AddAirplaneForm";
+import CustomQueryForm from "./components/CustomQueryForm";
+import ShowAirplanes from "./components/ShowAirplanes";
 
 export default function Home() {
   return (
@@ -12,6 +16,28 @@ export default function Home() {
           height={38}
           priority
         />
+        
+        {/* Database Connection Test */}
+        <div className="w-full max-w-md mb-8">
+          <DatabaseTestButton />
+        </div>
+        
+        {/* Custom SQL Query Form */}
+        <div className="w-full max-w-2xl mb-8">
+          <CustomQueryForm />
+        </div>
+        
+        {/* Show Airplanes */}
+        <div className="w-full max-w-2xl mb-8">
+          <ShowAirplanes />
+        </div>
+        
+        {/* Add Airplane Form */}
+        <div className="w-full max-w-2xl mb-8">
+          <AddAirplaneForm />
+        </div>
+        
+        
         <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
           <li className="mb-2 tracking-[-.01em]">
             Get started by editing{" "}
