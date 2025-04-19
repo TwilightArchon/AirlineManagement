@@ -72,21 +72,17 @@ sp_main: begin
 		leave sp_main;
     end if;
     
-	insert into location Values(ip_locationID);
-    
-    -- check boeing valid
 	if (ip_plane_type = 'Boeing' and (ip_model is null or ip_maintenanced is null)) then
 		leave sp_main;
 	end if;
 
-	-- Check Airbus valid
 	if (ip_plane_type = 'Airbus' and (ip_neo is null)) then
 		leave sp_main;
 	end if;
 
-	-- After all validations pass, then insert the location
 	insert into location Values(ip_locationID);
 
+	-- Then simplify your insert logic since validations are already done
 	if (ip_plane_type is not null) then
 		insert into airplane Values (ip_airlineID, ip_tail_num, ip_seat_capacity, ip_speed, ip_locationID, ip_plane_type, ip_maintenanced, ip_model, ip_neo);
 	else 
@@ -97,7 +93,6 @@ sp_main: begin
     -- Ensure that the type-specific attributes are accurate for the type
     -- Ensure that the airplane and location values are new and unique
     -- Add airplane and location into respective tables
-    
 
 end //
 delimiter ;
@@ -114,7 +109,16 @@ delimiter //
 create procedure add_airport (in ip_airportID char(3), in ip_airport_name varchar(200),
     in ip_city varchar(100), in ip_state varchar(100), in ip_country char(3), in ip_locationID varchar(50))
 sp_main: begin
-
+	if exists (select airportID from airport where ip_airportID = airportID) then
+		leave sp_main;
+	elseif exists (select locationID from airport where ip_locationID = locationID) 
+    or exists (select locationID from location where ip_locationID = locationID) then
+		leave sp_main;
+	else
+		insert into location (locationID) values (ip_locationID);
+		insert into airport (airportID, airport_name, city, state, country, locationID)
+        values (ip_airportID, ip_airport_name, ip_city, ip_state, ip_country, ip_locationID);
+	end if;
 	-- Ensure that the airport and location values are new and unique
     -- Add airport and location into respective tables
 
@@ -139,7 +143,29 @@ create procedure add_person (in ip_personID varchar(50), in ip_first_name varcha
     in ip_last_name varchar(100), in ip_locationID varchar(50), in ip_taxID varchar(50),
     in ip_experience integer, in ip_miles integer, in ip_funds integer)
 sp_main: begin
+	if not exists (select locationID from location where locationID = ip_locationID) then
+		leave sp_main;
+	elseif exists (select personID from passenger where personID = ip_personID) or 
+    exists (select personID from passenger_vacations where personID = ip_personID) or 
+    exists (select personID from pilot where personID = ip_personID) then
+		leave sp_main;
+	elseif ip_first_name is NULL then
+		leave sp_main;
+	else
+		if (ip_miles is not NULL) and (ip_funds is not NULL) and (ip_experience is NULL) and (ip_taxID is NULL) then
+			insert into person (personID, first_name, last_name, locationID)
+			values (ip_personID, ip_first_name, ip_last_name, ip_locationID);
+			insert into passenger (personID, miles, funds) 
+            values (ip_personID, ip_miles, ip_funds);
 
+		elseif (ip_experience is not NULL) and (ip_taxID is not NULL) and (ip_miles is NULL) and (ip_funds is NULL) then
+			insert into person (personID, first_name, last_name, locationID)
+			values (ip_personID, ip_first_name, ip_last_name, ip_locationID);
+			insert into pilot (personID, taxID, experience, commanding_flight)
+            values (ip_personID, ip_taxID, ip_experience, NULL);
+
+		end if;
+	end if;
 	-- Ensure that the location is valid
     -- Ensure that the persion ID is unique
     -- Ensure that the person is a pilot or passenger
@@ -157,7 +183,16 @@ drop procedure if exists grant_or_revoke_pilot_license;
 delimiter //
 create procedure grant_or_revoke_pilot_license (in ip_personID varchar(50), in ip_license varchar(100))
 sp_main: begin
-
+	if not exists (select 1 from pilot where personID = ip_personID) then
+        leave sp_main;
+    end if;
+    -- If license exists, delete it, otherwise add the license
+	if exists (select 1 from pilot_licenses where ip_personID = personID and ip_license = license) then
+		delete from pilot_licenses where ip_personID = personID and ip_license = license;
+    else
+		insert into pilot_licenses (personID, license)
+        values (ip_personID, ip_license);
+    end if;
 	-- Ensure that the person is a valid pilot
     -- If license exists, delete it, otherwise add the license
 
@@ -179,7 +214,39 @@ create procedure offer_flight (in ip_flightID varchar(50), in ip_routeID varchar
     in ip_support_airline varchar(50), in ip_support_tail varchar(50), in ip_progress integer,
     in ip_next_time time, in ip_cost integer)
 sp_main: begin
-
+	declare route_length int;
+    -- Ensure flight is not null
+    if ip_flightID is null then
+		leave sp_main;
+	end if;
+    -- Ensure that the route exists
+    if not exists (select 1 from route where routeID = ip_routeID) then
+		leave sp_main;
+    end if;
+    -- Ensure that the progress is less than the length of the route
+	select count(*) into route_length
+    from route_path where routeID = ip_routeID;
+    if (route_length = 0 or ip_progress >= route_length) then
+		leave sp_main;
+    end if;
+-- Ensure that the airplane exists
+    if ip_support_airline is not null and ip_support_tail is not null then
+		if not exists (select 1 from airplane where airlineID = ip_support_airline and
+         tail_num = ip_support_tail) then
+			leave sp_main;
+		end if;
+        -- Ensure that the airplane is not used by another flight
+		if exists (select 1 from flight where support_airline = ip_support_airline and
+         support_tail = ip_support_tail) then
+			leave sp_main;
+		end if;
+    end if;
+	-- select "create flight now";
+    -- Create the flight with the airplane starting in on the ground
+	insert into flight (flightID, routeID, support_airline, support_tail, progress,
+        airplane_status, next_time, cost)
+        values (ip_flightID, ip_routeID, ip_support_airline, ip_support_tail, ip_progress,
+        'on_ground', ip_next_time, ip_cost);
 	-- Ensure that the airplane exists
     -- Ensure that the route exists
     -- Ensure that the progress is less than the length of the route
@@ -200,7 +267,61 @@ drop procedure if exists flight_landing;
 delimiter //
 create procedure flight_landing (in ip_flightID varchar(50))
 sp_main: begin
-
+	declare v_routeID varchar(50);
+    declare v_progress int;
+    declare v_legID varchar(50);
+    declare v_distance int;
+    declare v_support_airline varchar(50);
+    declare v_support_tail varchar(50);
+	-- Ensure that the flight exists
+    if not exists (select 1 from flight where ip_flightID = flightID) then
+		leave sp_main;
+	end if;
+    -- Ensure that the flight is in the air
+    if not exists (
+        select 1 from flight where flightID = ip_flightID and airplane_status = 'in_flight'
+    ) then
+        leave sp_main;
+    end if;
+    
+    -- Increment the pilot's experience by 1
+    update pilot
+    set experience = experience + 1
+    where commanding_flight = ip_flightID;
+    
+    -- vars
+    select routeID, progress, support_airline, support_tail
+    into v_routeID, v_progress, v_support_airline, v_support_tail
+    from flight 
+    where flightID = ip_flightID;
+    
+    select legID 
+    into v_legID 
+    from route_path 
+    where routeID = v_routeID and sequence = v_progress;
+    
+    select distance 
+    into v_distance 
+    from leg 
+    where legID = v_legID;
+    
+    -- Increment the frequent flyer miles of all passengers on the plane
+    update passenger
+    set miles = miles + v_distance
+    where personID in (
+        select p.personID
+        from person p
+        join airplane a on a.airlineID = v_support_airline and a.tail_num = v_support_tail
+        where p.locationID = a.locationID
+    );
+    -- Update the status of the flight and increment the next time to 1 hour later
+		-- Hint: use addtime()
+	update flight
+    set 
+        airplane_status = 'on_ground',
+        next_time = addtime(next_time, '01:00:00')
+    where flightID = ip_flightID;
+    -- select 1;
 	-- Ensure that the flight exists
     -- Ensure that the flight is in the air
     
@@ -214,12 +335,12 @@ delimiter ;
 
 -- [7] flight_takeoff()
 -- -----------------------------------------------------------------------------
--- /* This stored procedure updates the state for a flight taking off from its current
--- airport towards the next airport along it's route.  The time for the next leg of
--- the flight must be calculated based on the distance and the speed of the airplane.
--- And we must also ensure that Airbus and general planes have at least one pilot
--- assigned, while Boeing must have a minimum of two pilots. If the flight cannot take
--- off because of a pilot shortage, then the flight must be delayed for 30 minutes. */
+/* This stored procedure updates the state for a flight taking off from its current
+airport towards the next airport along it's route.  The time for the next leg of
+the flight must be calculated based on the distance and the speed of the airplane.
+And we must also ensure that Airbus and general planes have at least one pilot
+assigned, while Boeing must have a minimum of two pilots. If the flight cannot take
+off because of a pilot shortage, then the flight must be delayed for 30 minutes. */
 -- -----------------------------------------------------------------------------
 drop procedure if exists flight_takeoff;
 delimiter //
@@ -281,6 +402,7 @@ sp_main: begin
             f.airplane_status = 'in_flight'
 		where f.flightID = currflightID;
 	end if;
+		
 	-- Ensure that the flight exists
     -- Ensure that the flight is on the ground
     -- Ensure that the flight has another leg to fly
@@ -293,6 +415,7 @@ sp_main: begin
 
 end //
 delimiter ;
+
 -- [8] passengers_board()
 -- -----------------------------------------------------------------------------
 /* This stored procedure updates the state for passengers getting on a flight at
@@ -301,13 +424,11 @@ and the flight must be heading towards that passenger's desired destination.
 Also, each passenger must have enough funds to cover the flight.  Finally, there
 must be enough seats to accommodate all boarding passengers. */
 -- -----------------------------------------------------------------------------
-
-DROP PROCEDURE IF EXISTS passengers_board;
-DELIMITER //
-CREATE PROCEDURE passengers_board (IN ip_flightID VARCHAR(50))
-sp_main: BEGIN
-
-    DECLARE currFlight VARCHAR(50);
+drop procedure if exists passengers_board;
+delimiter //
+create procedure passengers_board (in ip_flightID varchar(50))
+sp_main: begin
+	DECLARE currFlight VARCHAR(50);
     DECLARE currFunds INT;
     
     DECLARE nextleg VARCHAR(50);
@@ -420,11 +541,24 @@ sp_main: BEGIN
     UPDATE passenger AS p
     JOIN passengers123 AS g ON g.ppersonID = p.personID
     SET p.funds = p.funds - planeCost;
+		
+	-- Ensure the flight exists
+    -- Ensure that the flight is on the ground
+    -- Ensure that the flight has further legs to be flown
+    
+    -- Determine the number of passengers attempting to board the flight
+    -- Use the following to check:
+		-- The airport the airplane is currently located at
+        -- The passengers are located at that airport
+        -- The passenger's immediate next destination matches that of the flight
+        -- The passenger has enough funds to afford the flight
+        
+	-- Check if there enough seats for all the passengers
+		-- If not, do not add board any passengers
+        -- If there are, board them and deduct their funds
 
-END //
-DELIMITER ;
-
-
+end //
+delimiter ;
 
 -- [9] passengers_disembark()
 -- -----------------------------------------------------------------------------
@@ -436,17 +570,43 @@ drop procedure if exists passengers_disembark;
 delimiter //
 create procedure passengers_disembark (in ip_flightID varchar(50))
 sp_main: begin
-
-	-- Ensure the flight exists
-    -- Ensure that the flight is in the air
+	Declare plane_status varchar(100);
+    Declare airport_id VARCHAR(100);
+    Declare airport_loc VARCHAR(100);
+	Declare curr_leg INT;
+	select progress into curr_leg from flight where flightID = ip_flightID;
     
+    select airplane_status into plane_status from flight where flightID = ip_flightID;
+
+	If curr_leg = 0 THEN
+	SELECT airportID, locationID INTO airport_id, airport_loc from airport where airportID = (select departure from leg where legID = (select legID from route_path where routeID = (select routeID from flight where flightID = ip_flightID) and sequence = 1));
+	else
+	SELECT airportID, locationID INTO airport_id, airport_loc from airport where airportID = (select arrival from leg where legID = (select legID from route_path where routeID = (select routeID from flight where flightID = ip_flightID) and sequence = curr_leg));
+    END IF;
+	-- Ensure the flight exists
+    if not exists (select flightID from flight where flightID = ip_flightID) then
+		leave sp_main;
+	end if;
+    -- Ensure that the flight is in the ground
+    if not (select airplane_status from flight where flightID = ip_flightID) = 'on_ground' then
+		leave sp_main;
+	end if;
     -- Determine the list of passengers who are disembarking
 	-- Use the following to check:
 		-- Passengers must be on the plane supporting the flight
         -- Passenger has reached their immediate next destionation airport
-        
-	-- Move the appropriate passengers to the airport
+	CREATE TEMPORARY TABLE disembarking_passengers AS
+	select personID from passenger_vacations where personID in  
+	(select a.personID from person a right join passenger b on a.personID = b.personID where locationID = 
+    (select locationID from airplane a RIGHT JOIN flight f ON a.airlineID = f.support_airline AND a.tail_num = f.support_tail where flightID = ip_flightID))
+    and airportID = airport_id and sequence = 1;
+
+    -- Move the appropriate passengers to the airport
+    UPDATE person set locationID = airport_loc where personID IN (SELECT personID FROM disembarking_passengers);
     -- Update the vacation plans of the passengers
+    UPDATE passenger_vacations set sequence = sequence - 1 where personID IN (SELECT personID FROM disembarking_passengers) and sequence > 1;
+    DELETE FROM passenger_vacations WHERE personID IN (SELECT personID FROM disembarking_passengers) AND sequence = 1;
+    DROP TEMPORARY TABLE IF EXISTS disembarking_passengers;
 
 end //
 delimiter ;
@@ -463,17 +623,55 @@ drop procedure if exists assign_pilot;
 delimiter //
 create procedure assign_pilot (in ip_flightID varchar(50), ip_personID varchar(50))
 sp_main: begin
-
-	-- Ensure the flight exists
+	Declare plane_status varchar(100);
+    Declare curr_leg INT;
+    Declare leg_number INT;
+    Declare flight_num VARCHAR(100);
+    Declare found_id varchar(100);
+    Declare lic_num int;
+    Declare airport_loc VARCHAR(100);
+    Declare pilot_loc VARCHAR(100);
+    Declare airplane_loc VARCHAR(100);
+    
+    select airplane_status into plane_status from flight where flightID = ip_flightID;
+    select count(*) into leg_number from route_path where routeID = (select routeID from flight where flightID = ip_flightID);
+    select progress into curr_leg from flight where flightID = ip_flightID;
+    select personID into found_id from pilot where personID = ip_personID;
+    select commanding_flight into flight_num from pilot where personID = ip_personID;
+    
+    select count(*) into lic_num from (select plane_type from airplane a RIGHT JOIN flight f ON a.airlineID = f.support_airline AND a.tail_num = f.support_tail where flightID = ip_flightID) a left join (select license from pilot_licenses where personID = ip_personID) b on a.plane_type = b.license;
+	
+  
+    
+    -- Ensure the flight exists
+    if not exists (select 1 from flight where flightID = ip_flightID) then
+		leave sp_main;
+	end if;
     -- Ensure that the flight is on the ground
     -- Ensure that the flight has further legs to be flown
+    IF plane_status = 'on_ground' and curr_leg != leg_number THEN
     
     -- Ensure that the pilot exists and is not already assigned
+    IF found_id is not null and flight_num is null THEN
 	-- Ensure that the pilot has the appropriate license
+    IF lic_num = 1 THEN
     -- Ensure the pilot is located at the airport of the plane that is supporting the flight
-    
+    select locationID into pilot_loc from person where personID = ip_personID; 
+    If curr_leg = 0 THEN
+	select locationID into airport_loc from airport where airportID = (select departure from leg where legID = (select legID from route_path where routeID = (select routeID from flight where flightID = ip_flightID) and sequence = 1));
+	else
+	select locationID into airport_loc from airport where airportID = (select arrival from leg where legID = (select legID from route_path where routeID = (select routeID from flight where flightID = ip_flightID) and sequence = curr_leg));
+    END IF;
+    IF pilot_loc = airport_loc THEN
     -- Assign the pilot to the flight and update their location to be on the plane
-
+    select locationID into airplane_loc from airplane a RIGHT JOIN flight f ON a.airlineID = f.support_airline AND a.tail_num = f.support_tail where flightID = ip_flightID;
+	UPDATE pilot set commanding_flight = ip_flightID where personID = ip_personID;
+    UPDATE person set locationID = airplane_loc where personID = ip_personID;
+    DROP TEMPORARY TABLE IF EXISTS disembarking_passengers;
+    END IF;
+    END IF;
+    END IF;
+    END IF;
 end //
 delimiter ;
 
@@ -486,15 +684,34 @@ drop procedure if exists recycle_crew;
 delimiter //
 create procedure recycle_crew (in ip_flightID varchar(50))
 sp_main: begin
-
+	Declare plane_status varchar(100);
+    Declare curr_leg INT;
+    Declare leg_number INT;
+    Declare people INT;
+    Declare location varchar(100);
+    select airplane_status into plane_status from flight where flightID = ip_flightID;
+    select count(*) into leg_number from route_path where routeID = (select routeID from flight where flightID = ip_flightID);
+    select progress into curr_leg from flight where flightID = ip_flightID;
+    select count(*) into people from passenger a left join person b on a.personID = b.personID where locationID = (select locationID from airplane a RIGHT JOIN flight f ON a.airlineID = f.support_airline AND a.tail_num = f.support_tail where flightID = ip_flightID);    
+	
+    -- Ensure the flight exists 
+    if not exists (select 1 from flight where flightID = ip_flightID) then
+		leave sp_main;
+	end if;
 	-- Ensure that the flight is on the ground
+	IF plane_status = 'on_ground' THEN
     -- Ensure that the flight does not have any more legs
-    
+    IF curr_leg = leg_number THEN
     -- Ensure that the flight is empty of passengers
-    
+    IF people = 0 THEN
     -- Update assignements of all pilots
     -- Move all pilots to the airport the plane of the flight is located at
-
+    select locationID into location from airport where airportID = (select arrival from leg where legID = (select legID from route_path where (routeID = (select routeID from flight where flightID = ip_flightID) and sequence = leg_number)));
+	UPDATE person set locationID = location where personID in (select personID from pilot where commanding_flight = ip_flightID);
+    UPDATE pilot set commanding_flight = NULL where commanding_flight = ip_flightID;
+    END IF;
+    END IF;
+    END IF;
 end //
 delimiter ;
 
@@ -508,14 +725,30 @@ drop procedure if exists retire_flight;
 delimiter //
 create procedure retire_flight (in ip_flightID varchar(50))
 sp_main: begin
-
+	Declare plane_status varchar(100);
+    Declare curr_leg INT;
+    Declare leg_number INT;
+    Declare people INT;
+    select airplane_status into plane_status from flight where flightID = ip_flightID;
+    select count(*) into leg_number from route_path where routeID = (select routeID from flight where flightID = ip_flightID);
+    select progress into curr_leg from flight where flightID = ip_flightID;
+    select count(*) into people from person where locationID = (select locationID from airplane a RIGHT JOIN flight f ON a.airlineID = f.support_airline AND a.tail_num = f.support_tail where flightID = ip_flightID);
+	
+    -- Ensure the flight exists
+    if not exists (select 1 from flight where flightID = ip_flightID) then
+		leave sp_main;
+	end if;
 	-- Ensure that the flight is on the ground
+    IF plane_status = 'on_ground' THEN
     -- Ensure that the flight does not have any more legs
-    
+    IF curr_leg = leg_number or curr_leg = 0 THEN
     -- Ensure that there are no more people on the plane supporting the flight
-    
+    IF people = 0 THEN
     -- Remove the flight from the system
-
+	Delete from flight where flightID = ip_flightID;
+    END IF;
+    END IF;
+    END IF;
 end //
 delimiter ;
 
@@ -543,17 +776,31 @@ drop procedure if exists simulation_cycle;
 delimiter //
 create procedure simulation_cycle ()
 sp_main: begin
-
+	Declare num int;
+    Declare flight_id VARCHAR(50);
+    Declare plane_status VARCHAR(50);
 	-- Identify the next flight to be processed
-    
+     select flightID into flight_id from flight where next_time = 
+	(select next_time from flight ORDER BY TIME(next_time) limit 1) ORDER BY airplane_status, flightID limit 1;
+
+   select airplane_status into plane_status from flight where flightID = flight_id;
     -- If the flight is in the air:
 		-- Land the flight and disembark passengers
         -- If it has reached the end:
 			-- Recycle crew and retire flight
-            
+	if plane_status = 'in_flight' THEN
+    call flight_landing(flight_id);
+    call passengers_disembark(flight_id);
+    call recycle_crew(flight_id);
+    call retire_flight(flight_id);
+    
+    
 	-- If the flight is on the ground:
 		-- Board passengers and have the plane takeoff
-        
+	ELSE
+    call passengers_board(flight_id);
+    call flight_takeoff(flight_id);
+    END IF;
 	-- Hint: use the previously created procedures
 
 end //
@@ -570,7 +817,18 @@ list of planes (by their respective flight IDs) flying these flights. */
 -- -----------------------------------------------------------------------------
 create or replace view flights_in_the_air (departing_from, arriving_at, num_flights,
 	flight_list, earliest_arrival, latest_arrival, airplane_list) as
-select '_', '_', '_', '_', '_', '_', '_';
+select l.departure as departing_from, 
+l.arrival as arriving_at, 
+count(*) as num_flights,
+group_concat(distinct f.flightID order by f.flightID separator ',') as flight_list,
+min(f.next_time) as earliest_arrival,
+max(f.next_time) as latest_arrival,
+group_concat(distinct a.locationID order by f.flightID separator ',') as airplane_list
+from flight f left join airplane a on f.support_tail = a.tail_num
+join route_path r on f.routeID = r.routeID and f.progress = r.sequence
+join leg l on r.legID = l.legID
+where f.airplane_status = 'in_flight'
+group by l.departure, l.arrival;
 
 -- [15] flights_on_the_ground()
 -- ------------------------------------------------------------------------------
@@ -583,7 +841,31 @@ respective flight IDs) that are departing from each airport.*/
 -- ------------------------------------------------------------------------------
 create or replace view flights_on_the_ground (departing_from, num_flights,
 	flight_list, earliest_arrival, latest_arrival, airplane_list) as 
-select '_', '_', '_', '_', '_', '_';
+select l.arrival as departing_from, 
+count(*) as num_flights,
+group_concat(distinct f.flightID order by f.flightID separator ',') as flight_list,
+min(f.next_time) as earliest_arrival,
+max(f.next_time) as latest_arrival,
+group_concat(distinct a.locationID order by f.flightID separator ',') as airplane_list
+from flight f left join airplane a on f.support_tail = a.tail_num
+join route_path r on f.routeID = r.routeID and f.progress = r.sequence
+join leg l on r.legID = l.legID
+where f.airplane_status = 'on_ground' and 
+f.progress = (select max(r2.sequence) from route_path r2 where r2.routeID = f.routeID)
+group by departing_from
+union
+select l.departure as departing_from, 
+count(*) as num_flights,
+group_concat(distinct f.flightID order by f.flightID separator ',') as flight_list,
+min(f.next_time) as earliest_arrival,
+max(f.next_time) as latest_arrival,
+group_concat(distinct a.locationID order by f.flightID separator ',') as airplane_list
+from flight f left join airplane a on f.support_tail = a.tail_num
+join route_path r on f.routeID = r.routeID and f.progress+1 = r.sequence
+join leg l on r.legID = l.legID
+where f.airplane_status = 'on_ground' 
+and f.progress < (select max(r3.sequence) from route_path r3 where r3.routeID = f.routeID)
+group by l.departure;
 
 -- [16] people_in_the_air()
 -- -----------------------------------------------------------------------------
@@ -598,7 +880,25 @@ people on the airplane, and the list of these people by their person id. */
 create or replace view people_in_the_air (departing_from, arriving_at, num_airplanes,
 	airplane_list, flight_list, earliest_arrival, latest_arrival, num_pilots,
 	num_passengers, joint_pilots_passengers, person_list) as
-select '_', '_', '_', '_', '_', '_', '_', '_', '_', '_', '_';
+select l.departure as departing_from, 
+l.arrival as arriving_at, 
+count(distinct f.flightID) as num_airplanes,
+group_concat(distinct a.locationID order by a.locationID separator ',') as airplane_list,
+group_concat(distinct f.flightID order by f.flightID separator ',') as flight_list,
+min(f.next_time) as earliest_arrival,
+max(f.next_time) as latest_arrival,
+count(distinct pl.personID) as num_pilots,
+count(distinct pa.personID) as num_passengers,
+count(distinct p.personID) as joint_pilots_passengers,
+group_concat(distinct p.personID order by p.personID separator ',') as person_list
+from flight f left join airplane a on f.support_tail = a.tail_num
+join route_path r on f.routeID = r.routeID and f.progress = r.sequence
+join leg l on r.legID = l.legID
+join person p on p.locationID = a.locationID
+left join pilot pl on pl.commanding_flight = f.flightID and pl.personID = p.personID
+left join passenger pa on pa.personID = p.personID
+where f.airplane_status = 'in_flight'
+group by l.departure, l.arrival;
 
 -- [17] people_on_the_ground()
 -- -----------------------------------------------------------------------------
@@ -611,7 +911,19 @@ these people by their person id. */
 -- -----------------------------------------------------------------------------
 create or replace view people_on_the_ground (departing_from, airport, airport_name,
 	city, state, country, num_pilots, num_passengers, joint_pilots_passengers, person_list) as
-select '_', '_', '_', '_', '_', '_', '_', '_', '_', '_';
+select a.airportID as departing_from,
+a.locationID as airport,
+a.airport_name, a.city, a.state, a.country,
+count(distinct p1.personID) as num_pilots,
+count(distinct p2.personID) as num_passengers,
+count(distinct p.personID) as joint_pilots_passengers,
+group_concat(distinct p.personID order by p.personID separator ', ') as person_list
+from airport a join person p on p.locationID = a.locationID
+left join pilot p1 on p1.personID = p.personID
+left join passenger p2 on p2.personID = p.personID
+group by
+    a.airportID, a.locationID, a.airport_name, a.city, a.state, a.country;
+
 
 -- [18] route_summary()
 -- -----------------------------------------------------------------------------
@@ -622,14 +934,33 @@ those flights by flight ID, and the sequence of airports visited by the route. *
 -- -----------------------------------------------------------------------------
 create or replace view route_summary (route, num_legs, leg_sequence, route_length,
 	num_flights, flight_list, airport_sequence) as
-select '_', '_', '_', '_', '_', '_', '_';
+select r.routeID as route, count(rp.legID) as num_legs, 
+ group_concat(rp.legID separator ', ') as leg_sequence,
+coalesce(sum(l.distance), 0) as route_length, 
+(select count(*) from flight f where f.routeID = r.routeID) as num_flights,
+(select group_concat(f.flightID order by f.flightID separator ', ')
+     from flight f where f.routeID = r.routeID) as flight_list,
+group_concat(concat(l.departure, '->', l.arrival) order by rp.sequence separator ', ') as airport_sequence 
+from route r
+left join route_path rp on r.routeID = rp.routeID
+left join leg l on rp.legID = l.legID
+group by r.routeID;
+
 
 -- [19] alternative_airports()
--- -----------------------------------------------------------------------------
+-- --------------------------------------------------------------------------
 /* This view displays airports that share the same city and state. It should 
 specify the city, state, the number of airports shared, and the lists of the 
 airport codes and airport names that are shared both by airport ID. */
--- -----------------------------------------------------------------------------
+ -----------------------------------------------------------------------------	
 create or replace view alternative_airports (city, state, country, num_airports,
-	airport_code_list, airport_name_list) as
-select '_', '_', '_', '_', '_', '_';
+    airport_code_list, airport_name_list) as
+select a.city, a.state, a.country, count(*) as num_airports, 
+group_concat(a.airportID separator ', ') as airport_code_list, 
+group_concat(a.airport_name separator ', ') as airport_name_list
+from airport a
+group by a.city, a.state, a.country 
+having count(*) > 1
+;
+
+

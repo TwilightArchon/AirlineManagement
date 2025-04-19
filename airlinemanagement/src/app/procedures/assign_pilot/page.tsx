@@ -1,27 +1,61 @@
 'use client';
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function AssignPilotPage() {
+  const router = useRouter();
   const [form, setForm] = useState({
     flightID: "",
     personID: ""
   });
+  const [message, setMessage] = useState("");
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setForm({ ...form, [name]: value });
   };
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log("Assigning pilot:", form);
-    // axios.post('/api/assign-pilot', form)
+    setMessage("");
+    try {
+      const response = await fetch('/api/database/procedure', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          procedure: 'assign_pilot',
+          params: {
+            ip_flightID: form.flightID,
+            ip_personID: form.personID
+          }
+        }),
+      });
+      
+      const result = await response.json();
+      
+      if (result.status === 'success') {
+        setMessage("Pilot assigned successfully!");
+      } else {
+        setMessage(`Error: ${result.message}`);
+      }
+    } catch (error) {
+      setMessage("An error occurred while processing your request.");
+      console.error(error);
+    }
   };
 
   return (
     <div className="max-w-xl mx-auto p-8">
       <h1 className="text-3xl font-bold mb-6">Procedure: Assign Pilot</h1>
+      
+      {message && (
+        <div className={`p-4 mb-4 rounded ${message.includes("Error") ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700"}`}>
+          {message}
+        </div>
+      )}
 
       <form
         onSubmit={handleSubmit}
@@ -36,6 +70,7 @@ export default function AssignPilotPage() {
             onChange={handleChange}
             className="w-full p-2 rounded border"
             placeholder="Flight ID"
+            required
           />
         </div>
         <div>
@@ -47,6 +82,7 @@ export default function AssignPilotPage() {
             onChange={handleChange}
             className="w-full p-2 rounded border"
             placeholder="Person ID"
+            required
           />
         </div>
 
@@ -54,7 +90,7 @@ export default function AssignPilotPage() {
           <button
             type="button"
             className="bg-gray-700 text-white px-6 py-2 rounded hover:bg-gray-800"
-            onClick={() => setForm({ flightID: "", personID: "" })}
+            onClick={() => router.push('/')}
           >
             Cancel
           </button>
