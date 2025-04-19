@@ -1,9 +1,9 @@
 // import Image from "next/image";
-// import DatabaseTestButton from "./components/DatabaseTestButton";
-// import AddAirplaneForm from "./components/AddAirplaneForm";
-// import CustomQueryForm from "./components/CustomQueryForm";
-// import ShowAirplanes from "./components/ShowAirplanes";
-// import ViewDisplay from "./components/ViewDisplay";
+import DatabaseTestButton from "./components/DatabaseTestButton";
+import AddAirplaneForm from "./components/AddAirplaneForm";
+import CustomQueryForm from "./components/CustomQueryForm";
+import ShowAirplanes from "./components/ShowAirplanes";
+import ViewDisplay from "./components/ViewDisplay";
 
 // export default function Home() {
 //   return (
@@ -137,6 +137,15 @@ export default function ThreeSlotHeader() {
         </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          //         {/* Database Connection Test */}
+         <div className="w-full max-w-md mb-8">
+           <DatabaseTestButton />
+        </div>
+        
+        {/* Custom SQL Query Form */}
+        <div className="w-full max-w-2xl mb-8">
+          <CustomQueryForm />
+        </div>
         </div>
       </header>
 
