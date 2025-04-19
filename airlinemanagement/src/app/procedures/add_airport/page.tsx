@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 
 type AirportFormField =
   | "airportID"
@@ -13,6 +14,7 @@ type AirportFormField =
 type AirportForm = Record<AirportFormField, string>;
 
 export default function AddAirportPage() {
+  const router = useRouter();
   const [form, setForm] = useState<AirportForm>({
     airportID: "",
     airportName: "",
@@ -66,16 +68,7 @@ export default function AddAirportPage() {
           <button
             type="button"
             className="bg-gray-700 text-white px-6 py-2 rounded hover:bg-gray-800"
-            onClick={() =>
-              setForm({
-                airportID: "",
-                airportName: "",
-                city: "",
-                state: "",
-                country: "",
-                locationID: ""
-              })
-            }
+            onClick={() => router.push('/')}
           >
             Cancel
           </button>

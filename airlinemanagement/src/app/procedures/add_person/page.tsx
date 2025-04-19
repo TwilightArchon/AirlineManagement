@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+
 type PersonFormField =
   | "personID"
   | "firstName"
@@ -14,6 +16,7 @@ type PersonFormField =
 type PersonForm = Record<PersonFormField, string>;
 
 export default function AddPersonPage() {
+  const router = useRouter();
   const [form, setForm] = useState<PersonForm>({
     personID: "",
     firstName: "",
@@ -71,18 +74,7 @@ export default function AddPersonPage() {
           <button
             type="button"
             className="bg-gray-700 text-white px-6 py-2 rounded hover:bg-gray-800"
-            onClick={() =>
-              setForm({
-                personID: "",
-                firstName: "",
-                lastName: "",
-                locationID: "",
-                taxID: "",
-                experience: "",
-                miles: "",
-                funds: ""
-              })
-            }
+            onClick={() => router.push('/')}
           >
             Cancel
           </button>

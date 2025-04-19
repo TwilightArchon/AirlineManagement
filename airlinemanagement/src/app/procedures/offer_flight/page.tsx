@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 
 type OfferFlightFormFields =
   | "flightID"
@@ -14,6 +15,7 @@ type OfferFlightFormFields =
 type OfferFlightForm = Record<OfferFlightFormFields, string>;
 
 export default function OfferFlightPage() {
+  const router = useRouter();
   const [form, setForm] = useState<OfferFlightForm>({
     flightID: "",
     routeID: "",
@@ -68,17 +70,7 @@ export default function OfferFlightPage() {
           <button
             type="button"
             className="bg-gray-700 text-white px-6 py-2 rounded hover:bg-gray-800"
-            onClick={() =>
-              setForm({
-                flightID: "",
-                routeID: "",
-                supportAirline: "",
-                progress: "",
-                nextTime: "",
-                supportTail: "",
-                cost: ""
-              })
-            }
+            onClick={() => router.push('/')}
           >
             Cancel
           </button>

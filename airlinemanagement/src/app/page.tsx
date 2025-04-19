@@ -67,9 +67,45 @@ export default function ThreeSlotHeader() {
               <Button variant="outline">Procedures</Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent>
-              <DropdownMenuItem>Home</DropdownMenuItem>
-              <DropdownMenuItem>About</DropdownMenuItem>
-              <DropdownMenuItem>Services</DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/procedures/add_airplane">Add Airplane</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/procedures/add_airport">Add Airport</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/procedures/add_person">Add Person</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/procedures/assign_pilot">Assign Pilot</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/procedures/flight_landing">Flight Landing</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/procedures/flight_takeoff">Flight Takeoff</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/procedures/grant_or_revoke_pilot_license">Grant/Revoke Pilot License</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/procedures/offer_flight">Offer Flight</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/procedures/passengers_board">Passengers Board</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/procedures/passengers_disembark">Passengers Disembark</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/procedures/recycle_crew">Recycle Crew</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/procedures/retire_flight">Retire Flight</Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href="/procedures/simulation_cycle">Simulation Cycle</Link>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
@@ -104,9 +140,6 @@ export default function ThreeSlotHeader() {
         </div>
       </header>
 
-      <main className="p-6">
-        <p>This is the main page content.</p>
-      </main>
     </div>
   );
 }

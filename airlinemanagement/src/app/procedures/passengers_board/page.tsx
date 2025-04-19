@@ -1,14 +1,24 @@
 'use client';
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function PassengersBoardPage() {
-  const [flightID, setFlightID] = useState("");
+  const router = useRouter();
+  const [form, setForm] = useState({
+    personID: "",
+    flightID: ""
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+  };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log("Boarding passengers for flight:", flightID);
-    // axios.post('/api/passengers-board', { flightID })
+    console.log("Boarding passenger:", form);
+    // API call logic here
   };
 
   return (
@@ -20,14 +30,25 @@ export default function PassengersBoardPage() {
         className="bg-gray-100 p-6 rounded shadow grid grid-cols-1 gap-4"
       >
         <div>
+          <label className="block font-semibold mb-1">Person ID</label>
+          <input
+            type="text"
+            name="personID"
+            value={form.personID}
+            onChange={handleChange}
+            className="w-full p-2 rounded border"
+            placeholder="Enter person ID"
+          />
+        </div>
+        <div>
           <label className="block font-semibold mb-1">Flight ID</label>
           <input
             type="text"
             name="flightID"
-            value={flightID}
-            onChange={(e) => setFlightID(e.target.value)}
+            value={form.flightID}
+            onChange={handleChange}
             className="w-full p-2 rounded border"
-            placeholder="Flight ID"
+            placeholder="Enter flight ID"
           />
         </div>
 
@@ -35,7 +56,7 @@ export default function PassengersBoardPage() {
           <button
             type="button"
             className="bg-gray-700 text-white px-6 py-2 rounded hover:bg-gray-800"
-            onClick={() => setFlightID("")}
+            onClick={() => router.push('/')}
           >
             Cancel
           </button>

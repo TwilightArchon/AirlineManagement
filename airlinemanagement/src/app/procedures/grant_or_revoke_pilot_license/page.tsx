@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 
 type PilotLicenseFormType = {
   personID: string;
@@ -8,7 +9,8 @@ type PilotLicenseFormType = {
   [key: string]: string; 
 };
 
-export default function PilotLicenseForm() {
+export default function GrantOrRevokePilotLicensePage() {
+  const router = useRouter();
   const [form, setForm] = useState<PilotLicenseFormType>({
     personID: "",
     license: ""
@@ -53,7 +55,7 @@ export default function PilotLicenseForm() {
           <button
             type="button"
             className="bg-gray-700 text-white px-6 py-2 rounded hover:bg-gray-800"
-            onClick={() => setForm({ personID: "", license: "" })}
+            onClick={() => router.push('/')}
           >
             Cancel
           </button>

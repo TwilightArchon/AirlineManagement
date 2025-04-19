@@ -1,8 +1,10 @@
 'use client';
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function AssignPilotPage() {
+  const router = useRouter();
   const [form, setForm] = useState({
     flightID: "",
     personID: ""
@@ -54,7 +56,7 @@ export default function AssignPilotPage() {
           <button
             type="button"
             className="bg-gray-700 text-white px-6 py-2 rounded hover:bg-gray-800"
-            onClick={() => setForm({ flightID: "", personID: "" })}
+            onClick={() => router.push('/')}
           >
             Cancel
           </button>

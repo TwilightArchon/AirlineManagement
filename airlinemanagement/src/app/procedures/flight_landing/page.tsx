@@ -1,14 +1,20 @@
 'use client';
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function FlightLandingPage() {
+  const router = useRouter();
   const [flightID, setFlightID] = useState("");
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFlightID(e.target.value);
+  };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    console.log("Landing flight:", flightID);
-    // axios.post('/api/flight-landing', { flightID })
+    console.log("Flight landing:", flightID);
+    // API call logic here
   };
 
   return (
@@ -17,17 +23,16 @@ export default function FlightLandingPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="bg-gray-100 p-6 rounded shadow grid grid-cols-1 gap-4"
+        className="bg-gray-100 p-6 rounded shadow"
       >
-        <div>
+        <div className="mb-4">
           <label className="block font-semibold mb-1">Flight ID</label>
           <input
             type="text"
-            name="flightID"
             value={flightID}
-            onChange={(e) => setFlightID(e.target.value)}
+            onChange={handleChange}
             className="w-full p-2 rounded border"
-            placeholder="Flight ID"
+            placeholder="Enter flight ID"
           />
         </div>
 
@@ -35,7 +40,7 @@ export default function FlightLandingPage() {
           <button
             type="button"
             className="bg-gray-700 text-white px-6 py-2 rounded hover:bg-gray-800"
-            onClick={() => setFlightID("")}
+            onClick={() => router.push('/')}
           >
             Cancel
           </button>

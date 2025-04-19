@@ -1,14 +1,20 @@
 'use client';
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function RecycleCrewPage() {
+  const router = useRouter();
   const [flightID, setFlightID] = useState("");
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFlightID(e.target.value);
+  };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     console.log("Recycling crew for flight:", flightID);
-    // axios.post('/api/recycle-crew', { flightID })
+    // API call logic here
   };
 
   return (
@@ -17,17 +23,17 @@ export default function RecycleCrewPage() {
 
       <form
         onSubmit={handleSubmit}
-        className="bg-gray-100 p-6 rounded shadow grid grid-cols-1 gap-4"
+        className="bg-gray-100 p-6 rounded shadow"
       >
-        <div>
-          <label className="block font-semibold mb-1">ip_flightID</label>
+        <div className="mb-4">
+          <label className="block font-semibold mb-1">Flight ID</label>
           <input
             type="text"
             name="flightID"
             value={flightID}
-            onChange={(e) => setFlightID(e.target.value)}
+            onChange={handleChange}
             className="w-full p-2 rounded border"
-            placeholder="Flight ID"
+            placeholder="Enter flight ID"
           />
         </div>
 
@@ -35,7 +41,7 @@ export default function RecycleCrewPage() {
           <button
             type="button"
             className="bg-gray-700 text-white px-6 py-2 rounded hover:bg-gray-800"
-            onClick={() => setFlightID("")}
+            onClick={() => router.push('/')}
           >
             Cancel
           </button>
