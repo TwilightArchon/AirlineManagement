@@ -1,0 +1,70 @@
+'use client';
+
+import React, { useState } from "react";
+
+type PilotLicenseFormType = {
+  personID: string;
+  license: string;
+  [key: string]: string; 
+};
+
+export default function PilotLicenseForm() {
+  const [form, setForm] = useState<PilotLicenseFormType>({
+    personID: "",
+    license: ""
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setForm({ ...form, [name]: value });
+  };
+
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    console.log("Grant/Revoke License:", form);
+  };
+
+  return (
+    <div className="max-w-xl mx-auto p-8">
+      <h1 className="text-3xl font-bold mb-6">Procedure: Grant or Revoke Pilot License</h1>
+
+      <form
+        onSubmit={handleSubmit}
+        className="bg-gray-100 p-6 rounded shadow grid grid-cols-2 gap-4"
+      >
+        {[
+          ["Person ID", "personID"],
+          ["License", "license"]
+        ].map(([label, name]) => (
+          <div key={name} className="col-span-2">
+            <label className="block font-semibold mb-1">{label}</label>
+            <input
+              type="text"
+              name={name}
+              value={form[name]}
+              onChange={handleChange}
+              className="w-full p-2 rounded border"
+              placeholder={label}
+            />
+          </div>
+        ))}
+
+        <div className="col-span-2 flex justify-between mt-4">
+          <button
+            type="button"
+            className="bg-gray-700 text-white px-6 py-2 rounded hover:bg-gray-800"
+            onClick={() => setForm({ personID: "", license: "" })}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"
+          >
+            Add / Revoke
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}
