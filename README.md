@@ -82,11 +82,11 @@ Backend:
 Connection between Frontend and Backedn:
 
 ## Team Contribution
-Felix Wang: Implemented Views in the frontend.
+Felix Wang: Implemented views in the frontend.
 
 Junjie Tang: 
 
-Yuanhong Zhou: Implemented Procedures in the frontend.
+Yuanhong Zhou: Implemented procedures in the frontend.
 
 Yurun Zhu:
 
