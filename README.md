@@ -86,7 +86,7 @@ Felix Wang: Implemented Views in the frontend.
 
 Junjie Tang: 
 
-Yuanhong Zhou:
+Yuanhong Zhou: Implemented Procedures in the frontend.
 
-Yurun Zhu: Implemented Procedures in the frontend.
+Yurun Zhu:
 
