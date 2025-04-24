@@ -3,7 +3,7 @@ import Link from "next/link";
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 
-export default function ThreeSlotHeader() {
+export default function Header() {
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="flex justify-between items-center p-4 shadow-md bg-white">
