@@ -75,11 +75,18 @@ Before you can run this project, you need to install Node.js and npm (which come
 5. Once open the website, you can either click the drop down button views or procedures to run the application.
 
 ## Technologies for this application
-Frontend: We use React as our Frontend
+Frontend: Next.js under react framework, with various components from Radix UI
+Backend: Mysql local database
+   mysql2 library to connect mysql local database and the server
+   use api calls to connect the database and the user side
 
-Backend: 
+Connection: Use procedure and view api to interact with database (db.ts) to establish connection.
 
-Connection between Frontend and Backedn:
+Data flow:
+Frontend components use fetch to call API endpoints
+API routes execute SQL queries or stored procedures using the database connection
+Results are returned as JSON to the frontend
+Frontend displays the results in tables or other UI components
 
 ## Team Contribution
 Felix Wang: Implemented views in the frontend.
@@ -88,5 +95,5 @@ Junjie Tang:
 
 Yuanhong Zhou: Implemented procedures in the frontend.
 
-Yurun Zhu:
+Yurun Zhu:Implemented the backend connection to mysql
 
