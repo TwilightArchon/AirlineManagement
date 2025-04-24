@@ -14,7 +14,7 @@ export default function AddAirplanePage() {
     plane_type: "",
     maintenanced: false,
     model: "",
-    neo: false
+    neo: null
   });
   const [message, setMessage] = useState("");
 
@@ -24,6 +24,13 @@ export default function AddAirplanePage() {
     if (type === 'checkbox') {
       const checked = (e.target as HTMLInputElement).checked;
       setForm({ ...form, [name]: checked });
+    } else if (name === 'plane_type') {
+      // If Boeing is selected, set neo to null
+      if (value === 'Boeing') {
+        setForm({ ...form, [name]: value, neo: null });
+      } else {
+        setForm({ ...form, [name]: value });
+      }
     } else {
       setForm({ ...form, [name]: value });
     }
@@ -201,7 +208,7 @@ export default function AddAirplanePage() {
             <input
               type="checkbox"
               name="neo"
-              checked={form.neo}
+              checked={form.neo === null ? false : form.neo}
               onChange={handleChange}
               className="mr-2"
             />
