@@ -1,8 +1,8 @@
 # AirlineManagement
 
-# CS4400 Project Setup Guide
+# CS4400 Project Guide
 
-## Prerequisites: Installing Node.js and npm
+## Setup Instructions
 
 Before you can run this project, you need to install Node.js and npm (which comes with Node.js).
 
@@ -52,7 +52,7 @@ Before you can run this project, you need to install Node.js and npm (which come
    npm -v
    ```
 
-## Getting Started with the Project
+## Instructions to run the app
 
 1. Clone this repository:
    ```
@@ -72,17 +72,15 @@ Before you can run this project, you need to install Node.js and npm (which come
 
 4. Open your browser and navigate to [http://localhost:3000](http://localhost:3000)
 
-## Project Structure
+5. Once open the website, you can either click the drop down button views or procedures to run the application.
+## Technologies for this application
+Frontend: We use React as our Frontend
+Backend: 
+Connection between Frontend and Backedn:
 
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+## Team Contribution
+Felix Wang: Implemented Views in the frontend.
+Junjie Tang: 
+Yuanhong Zhou:
+Yurun Zhu: Implemented Procedures in the frontend.
 
-- `src/app`: Contains the pages of the application
-- `public`: Static assets like images
-- `src/components`: Reusable React components
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
