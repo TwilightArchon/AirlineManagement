@@ -91,7 +91,7 @@ Frontend displays the results in tables or other UI components
 ## Team Contribution
 Felix Wang: Implemented views in the frontend.
 
-Junjie Tang: 
+Junjie Tang: Implemented alternative backend mysql connection with flask
 
 Yuanhong Zhou: Implemented procedures in the frontend.
 
