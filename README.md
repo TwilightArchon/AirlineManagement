@@ -73,14 +73,20 @@ Before you can run this project, you need to install Node.js and npm (which come
 4. Open your browser and navigate to [http://localhost:3000](http://localhost:3000)
 
 5. Once open the website, you can either click the drop down button views or procedures to run the application.
+
 ## Technologies for this application
 Frontend: We use React as our Frontend
+
 Backend: 
+
 Connection between Frontend and Backedn:
 
 ## Team Contribution
 Felix Wang: Implemented Views in the frontend.
+
 Junjie Tang: 
+
 Yuanhong Zhou:
+
 Yurun Zhu: Implemented Procedures in the frontend.
 
